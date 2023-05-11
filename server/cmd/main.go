@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/MyLink_Server/MyLink_Server/internal/app"
+	"github.com/keyshuo/mylinkserver@v0.0.0-20230511054547-d51e401c411e"
 )
 
 func main() {
