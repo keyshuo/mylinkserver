@@ -1,9 +1,12 @@
 package app
 
 import (
+	"MyLink_Server/server/internal/app/handler"
+	"flag"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/klog"
 )
 
 type Server struct {
@@ -21,12 +24,20 @@ func NewServer() *Server {
 func (serv *Server) Init() {
 	serv.server.Use(CorsMiddleware)
 
-	serv.server.GET("/ping", Ping)
+	serv.server.GET("/ping", handler.Ping)
+}
 
-	//serv.server.POST("/login", Login)
+func (serv *Server) Run() {
+	klog.InitFlags(nil)
+	defer klog.Flush()
+	flag.Set("logtostderr", "false")
+	flag.Set("alsologtostderr", "false")
+	flag.Parse()
 
-	serv.server.POST("/register")
-
+	if err := serv.server.Run(":8118"); err != nil {
+		klog.Error(err, "gin run failed")
+		return
+	}
 }
 
 func CorsMiddleware(c *gin.Context) {

@@ -11,6 +11,7 @@ func WriteOK(c *gin.Context, msg string) {
 		c.JSON(http.StatusOK, gin.H{
 			"data": msg,
 		})
+	} else {
+		c.JSON(http.StatusOK, gin.H{})
 	}
-	c.JSON(http.StatusOK, gin.H{})
 }
