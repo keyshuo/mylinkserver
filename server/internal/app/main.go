@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -88,9 +89,15 @@ func AuthMiddleware(c *gin.Context) {
 	if !ok {
 		klog.Error("Get user's message occur error!")
 	}
-
-	c.Set("username", claims["username"].(string))
+	if expire, ok := claims["expire"].(float64); ok {
+		if time.Unix(int64(expire), 0).Before(time.Now()) {
+			c.Status(http.StatusUnauthorized)
+			return
+		}
+	}
+	c.Set("account", claims["account"].(string))
 	c.Set("status", claims["status"].(string))
+	c.Set("username", claims["username"].(string))
 	c.Next()
 }
 

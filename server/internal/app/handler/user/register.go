@@ -1,13 +1,10 @@
 package user
 
 import (
-	"fmt"
-
 	"MyLink_Server/server/internal/app/handler"
 	app "MyLink_Server/server/internal/app/handler/sqloperate"
 
 	"github.com/gin-gonic/gin"
-	"k8s.io/klog"
 )
 
 func Register(c *gin.Context) {
@@ -16,56 +13,38 @@ func Register(c *gin.Context) {
 	inputUser.Username = c.Query("username")
 	inputUser.Password = c.Query("password")
 
-	db, err := app.NewMySql()
-	if err != nil {
-		klog.Error(err)
-		handler.WriteFailed(c, "database connection failed")
+	msg := "select count(*) from user where account = ? ;"
+	db, errmsg := app.NewMySql(msg)
+	if errmsg != "" {
+		handler.WriteFailed(c, errmsg)
 		return
 	}
-
 	defer db.Close()
-	err = db.Test()
-	if err != nil {
-		klog.Error(err)
-		handler.WriteFailed(c, "database connection failed")
-		return
-	}
+
 	//这里可能存在BUG，count语句使用string数组保存
-	msg := fmt.Sprintf("select count(*) from user where account = %s ;", inputUser.Account)
-	if err = db.Prepare(msg); err != nil {
-		klog.Error(err)
-		handler.WriteFailed(c, "account is illegal")
-		return
-	}
+	result, err := db.Search(inputUser.Account)
 
-	result, err := db.Search(msg)
-
-	if err == nil {
+	if err == "" {
 		if result[0] == "1" {
-			klog.Error("Error: ", err)
 			handler.WriteFailed(c, "account have existed")
 			return
 		} else {
-			msg = fmt.Sprintf("insert into user value ( %s, %s, %s);", inputUser.Account, inputUser.Username, inputUser.Password)
-			err = db.Prepare(msg)
-			if err != nil {
-				klog.Error(err)
-				handler.WriteFailed(c, "account or password is illegal")
+			msg = "insert into user value ( ?, ?, ?);"
+			errmsg = db.UpdateMysql(msg)
+			if err != "" {
+				handler.WriteFailed(c, errmsg)
 				return
 			}
-			err = db.Exec(msg)
-			if err != nil {
-				klog.Error("Error: ", err)
-				handler.WriteFailed(c, "register failed")
+			errmsg = db.Exec(inputUser.Account, inputUser.Username, inputUser.Password)
+			if err != "" {
+				handler.WriteFailed(c, errmsg)
 				return
 			}
 			handler.WriteOK(c, "")
 			return
 		}
 	} else {
-		klog.Error("Error: ", err)
-		handler.WriteFailed(c, "search error,please try again")
+		handler.WriteFailed(c, errmsg)
 		return
 	}
-
 }

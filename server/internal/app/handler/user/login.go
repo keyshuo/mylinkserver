@@ -1,8 +1,6 @@
 package user
 
 import (
-	"fmt"
-
 	"MyLink_Server/server/internal/app/handler"
 	sqloperate "MyLink_Server/server/internal/app/handler/sqloperate"
 
@@ -15,40 +13,25 @@ func Login(c *gin.Context) {
 	inputUser.Account = c.Query("account")
 	inputUser.Password = c.Query("password")
 
-	db, err := sqloperate.NewMySql()
-	if err != nil {
-		klog.Error(err)
-		handler.WriteFailed(c, "database connection failed")
+	msg := "select count(*) from user where account= ? and password=?;"
+	db, errmsg := sqloperate.NewMySql(msg)
+	if errmsg != "" {
+		handler.WriteFailed(c, errmsg)
 		return
 	}
-
 	defer db.Close()
-	msg := fmt.Sprintf("select count(*) from user where account= %s and password=%s;", inputUser.Account, inputUser.Password)
-	err = db.Prepare(msg)
-	if err != nil {
-		klog.Error(err)
-		handler.WriteFailed(c, "account or password is incorrect")
+	result, errmsg := db.Search(inputUser.Account, inputUser.Password)
+	if errmsg != "" {
+		handler.WriteFailed(c, errmsg)
 		return
 	}
-	result, err := db.Search(msg)
-	if err != nil {
-		klog.Error(err)
-		handler.WriteFailed(c, "account or password is incorrect")
-		return
-	}
-	if err == nil {
-		if result[0] == "1" {
-			tokenString, err := GenerateToken(inputUser)
-			if err != nil {
-				klog.Error("Error: ", err)
-				handler.WriteFailed(c, "token generate failed")
-				return
-			}
-			handler.WriteOK(c, tokenString)
-		} else {
-			klog.Error(err)
-			handler.WriteFailed(c, "account or password is incorrect")
+	if result[0] == "1" {
+		tokenString, err := GenerateToken(inputUser)
+		if err != nil {
+			klog.Error("Error: ", err)
+			handler.WriteFailed(c, "token generate failed")
 			return
 		}
+		handler.WriteOK(c, tokenString)
 	}
 }
