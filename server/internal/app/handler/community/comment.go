@@ -13,13 +13,12 @@ func GetComment(c *gin.Context) {
 	page := c.Query("page")
 	var page_int int
 
-	if _, err := fmt.Sscan(page, &page_int); err == nil {
+	if _, err := fmt.Sscan(page, &page_int); err != nil {
 		klog.Error(err)
-
 	}
 	page = string(rune((page_int - 1) * 50))
 
-	msg := "select comment.*,user.username from comment inner join on comment.userid order by comment.time desc limit 50 offset ?; "
+	msg := "select user.username,comment.date,comment.comment from comment join user on user.account=comment.account order by comment.date desc limit 50 offset ?; "
 	db, errmsg := sqloperate.NewMySql(msg)
 	if errmsg != "" {
 		handler.WriteFailed(c, errmsg)
@@ -28,7 +27,7 @@ func GetComment(c *gin.Context) {
 
 	defer db.Close()
 
-	result, errmsg := db.Search(page)
+	result, errmsg := db.SearchRows(&UserComment{}, page)
 	if errmsg != "" {
 		handler.WriteFailed(c, errmsg)
 		return
@@ -38,43 +37,46 @@ func GetComment(c *gin.Context) {
 }
 
 func GetMyComment(c *gin.Context) {
-	account := c.Query("account")
+	status := c.Value("status")
+	if status == "false" {
+		handler.WriteFailed(c, "please login")
+		return
+	}
+	account := c.Value("account")
+	// fmt.Println(account)
 	page := c.Query("page")
 	var page_int int
 
-	if _, err := fmt.Sscan(page, &page_int); err == nil {
+	if _, err := fmt.Sscan(page, &page_int); err != nil {
 		klog.Error(err)
-
 	}
 	page = string(rune((page_int - 1) * 50))
 
-	msg := "select comment.*,user.username from comment inner join on comment.userid=user.userid where comment.account = ? order by comment.time desc limit 50 offset ?; "
+	msg := "select user.username,comment.date,comment.comment from comment join user on user.account=comment.account where comment.account = ? order by comment.date desc limit 50 offset ? ;"
 	db, errmsg := sqloperate.NewMySql(msg)
 	if errmsg != "" {
 		handler.WriteFailed(c, errmsg)
 		return
 	}
-
 	defer db.Close()
 
-	result, errmsg := db.Search(account, page)
+	result, errmsg := db.SearchRows(&UserComment{}, account, page)
 	if errmsg != "" {
 		handler.WriteFailed(c, errmsg)
 		return
 	}
-
 	handler.WriteOK(c, result)
 }
 
 func CreateComment(c *gin.Context) {
-	status := c.Query("status")
+	status := c.Value("status")
 	if status == "false" {
 		handler.WriteFailed(c, "please login")
 		return
 	}
 	comment := c.Query("comment")
 	time := c.Query("time")
-	account := c.Query("account")
+	account := c.Value("account")
 	msg := "insert into comment value (?,?,?);"
 	db, errmsg := sqloperate.NewMySql(msg)
 	if errmsg != "" {
@@ -91,14 +93,14 @@ func CreateComment(c *gin.Context) {
 }
 
 func DeleteComment(c *gin.Context) {
-	status := c.Query("status")
+	status := c.Value("status")
 	if status == "false" {
 		handler.WriteFailed(c, "please login")
 		return
 	}
 	time := c.Query("time")
-	account := c.Query("account")
-	msg := "delete from comment where account = ? and time = ?;"
+	account := c.Value("account")
+	msg := "delete from comment where account = ? and date = ?;"
 	db, errmsg := sqloperate.NewMySql(msg)
 	if errmsg != "" {
 		handler.WriteFailed(c, errmsg)

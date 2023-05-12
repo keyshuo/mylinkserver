@@ -2,6 +2,8 @@ package app
 
 import (
 	"MyLink_Server/server/internal/app/handler"
+	community "MyLink_Server/server/internal/app/handler/community"
+	"MyLink_Server/server/internal/app/handler/leaderboard"
 	usr "MyLink_Server/server/internal/app/handler/user"
 	"flag"
 	"fmt"
@@ -33,6 +35,42 @@ func (serv *Server) Init() {
 	serv.server.POST("/login", usr.Login)
 
 	serv.server.POST("/register", usr.Register)
+
+	comment := serv.server.Group("/comment")
+	{
+
+		comment.GET("/getComment", community.GetComment)
+
+		my := comment.Group("/my")
+		{
+			my.Use(AuthMiddleware)
+
+			my.GET("/getMyComment", community.GetMyComment)
+
+			my.GET("/createComment", community.CreateComment)
+
+			my.GET("/deleteComment", community.DeleteComment)
+		}
+	}
+
+	ranking := serv.server.Group("/rank")
+	{
+
+		my := ranking.Group("/my")
+		{
+			my.Use(AuthMiddleware)
+
+			my.GET("getRankLow", leaderboard.GetRankLow)
+
+			my.GET("getRankMedium", leaderboard.GetRankMedium)
+
+			my.GET("getRankHigh", leaderboard.GetRankHigh)
+
+			my.GET("createRank", leaderboard.CreateRank)
+
+		}
+
+	}
 
 }
 
@@ -66,8 +104,13 @@ func CorsMiddleware(c *gin.Context) {
 
 func AuthMiddleware(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
-	fmt.Println("token:" + tokenString)
 	if tokenString == "" {
+		fmt.Print(tokenString)
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+	if len(tokenString) == 0 {
+		fmt.Print(tokenString)
 		c.Status(http.StatusUnauthorized)
 		return
 	}

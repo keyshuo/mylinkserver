@@ -2,6 +2,9 @@ package app
 
 import (
 	"database/sql"
+	"fmt"
+	"reflect"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"k8s.io/klog"
@@ -46,9 +49,60 @@ func (sql *MySql) Search(args ...interface{}) ([]string, string) {
 	defer rows.Close()
 	for rows.Next() {
 		rows.Scan(&temp)
+		fmt.Println(temp)
 		result = append(result, temp)
 	}
+	fmt.Println("search")
 	return result, ""
+}
+
+func (sql *MySql) SearchRows(obj interface{}, args ...interface{}) ([]interface{}, string) {
+	rows, err := sql.stmt.Query(args...)
+	if err != nil {
+		return nil, "server search error"
+	}
+	defer rows.Close()
+	s := reflect.ValueOf(obj).Elem()
+	t := s.Type()
+	fields := make(map[string]int)
+	for i := 0; i < s.NumField(); i++ {
+		fields[t.Field(i).Name] = i
+	}
+
+	// 遍历查询结果
+	results := make([]interface{}, 0)
+	for rows.Next() {
+		// 创建结构体实例
+		r := reflect.New(t).Elem()
+
+		// 将查询结果映射到结构体
+		values := make([]interface{}, s.NumField())
+		for i := 0; i < s.NumField(); i++ {
+			field := t.Field(i)
+			values[i] = r.FieldByName(field.Name).Addr().Interface()
+		}
+		if err := rows.Scan(values...); err != nil {
+			klog.Error(err)
+			return nil, "server error"
+		}
+		for i := 0; i < s.NumField(); i++ {
+			field := t.Field(i)
+			if field.Name == "Time" {
+				if values[i] != nil {
+					value := values[i].(*string)
+					date, err := time.ParseInLocation("2006-01-02 15:04:05", *value, time.Local)
+					if err != nil {
+						klog.Error(err)
+						return nil, "server error"
+					}
+					r.FieldByName(field.Name).Set(reflect.ValueOf(date.Format("2006-01-02 15:04:05")))
+				}
+			}
+		}
+		results = append(results, r.Addr().Interface())
+	}
+
+	return results, ""
 }
 
 //执行UPDATE、INSERT、DELETE操作

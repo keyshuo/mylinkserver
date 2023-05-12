@@ -1,9 +1,7 @@
 package leaderboard
 
-import "time"
-
-type UserComment struct {
+type UserRank struct {
 	Username string
-	Time     time.Time
-	Rank     string
+	Date     string
+	Score    string
 }

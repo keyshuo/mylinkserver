@@ -25,8 +25,27 @@ func Register(c *gin.Context) {
 	result, err := db.Search(inputUser.Account)
 
 	if err == "" {
-		if result[0] == "1" {
+		if result[0] >= "1" {
 			handler.WriteFailed(c, "account have existed")
+			return
+		}
+	} else {
+		handler.WriteFailed(c, errmsg)
+		return
+	}
+
+	msg = "select count(*) from user where username = ? ;"
+	errmsg = db.UpdateMysql(msg)
+	if errmsg != "" {
+		handler.WriteFailed(c, errmsg)
+		return
+	}
+
+	result1, err := db.Search(inputUser.Username)
+
+	if err == "" {
+		if result1[0] >= "1" {
+			handler.WriteFailed(c, "username have existed")
 			return
 		} else {
 			msg = "insert into user value ( ?, ?, ?);"
