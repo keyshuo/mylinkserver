@@ -4,6 +4,8 @@ go 1.18
 
 require github.com/gin-gonic/gin v1.9.0
 
+require github.com/go-sql-driver/mysql v1.7.1 // indirect
+
 require (
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
