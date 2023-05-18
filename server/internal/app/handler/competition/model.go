@@ -2,11 +2,13 @@ package netcompete
 
 type Player struct {
 	//player name
-	name string
+	username string
 	//player prepare status
 	prepare bool
 	//player connection status
 	connection bool
+	//player game time
+	//gametime
 }
 
 type Competetion struct {

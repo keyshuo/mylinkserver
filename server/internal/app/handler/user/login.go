@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog"
 )
 
+//POST use body
 func Login(c *gin.Context) {
 	var inputUser User
 	inputUser.Account = c.Query("account")
