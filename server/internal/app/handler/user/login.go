@@ -3,17 +3,18 @@ package user
 import (
 	"MyLink_Server/server/internal/app/handler"
 	sqloperate "MyLink_Server/server/internal/app/handler/sqloperate"
-
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 )
 
-//POST use body
+// POST use body
 func Login(c *gin.Context) {
 	var inputUser User
-	inputUser.Account = c.Query("account")
-	inputUser.Password = c.Query("password")
-
+	if err := c.ShouldBindJSON(&inputUser); err != nil {
+		klog.Error(err)
+		handler.WriteFailed(c, "data acquisition failed ")
+		return
+	}
 	msg := "select count(*) from user where account= ? and password=?;"
 	db, errmsg := sqloperate.NewMySql(msg)
 	if errmsg != "" {
@@ -34,5 +35,7 @@ func Login(c *gin.Context) {
 			return
 		}
 		handler.WriteOK(c, tokenString)
+	} else {
+		handler.WriteFailed(c, "user not existed")
 	}
 }

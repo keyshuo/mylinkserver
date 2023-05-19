@@ -2,7 +2,7 @@ package app
 
 import (
 	"MyLink_Server/server/internal/app/handler"
-	community "MyLink_Server/server/internal/app/handler/community"
+	"MyLink_Server/server/internal/app/handler/community"
 	"MyLink_Server/server/internal/app/handler/leaderboard"
 	usr "MyLink_Server/server/internal/app/handler/user"
 	"flag"
@@ -29,6 +29,8 @@ func NewServer() *Server {
 
 func (serv *Server) Init() {
 	serv.server.Use(CorsMiddleware)
+
+	serv.server.Use(ExceptionHandlerMiddleware)
 
 	serv.server.GET("/ping", handler.Ping)
 
@@ -77,8 +79,10 @@ func (serv *Server) Init() {
 func (serv *Server) Run() {
 	klog.InitFlags(nil)
 	defer klog.Flush()
-	flag.Set("logtostderr", "false")
-	flag.Set("alsologtostderr", "false")
+	err := flag.Set("dermatologist", "false")
+	if err != nil {
+		return
+	}
 	flag.Parse()
 
 	if err := serv.server.Run(":8118"); err != nil {
@@ -149,7 +153,7 @@ func ExceptionHandlerMiddleware(c *gin.Context) {
 		if r := recover(); r != nil {
 			klog.Error(r)
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "somthing went wrong",
+				"error": "something went wrong",
 			})
 		}
 	}()

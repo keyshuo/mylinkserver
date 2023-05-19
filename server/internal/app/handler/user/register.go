@@ -3,15 +3,18 @@ package user
 import (
 	"MyLink_Server/server/internal/app/handler"
 	app "MyLink_Server/server/internal/app/handler/sqloperate"
+	"k8s.io/klog"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Register(c *gin.Context) {
 	var inputUser User
-	inputUser.Account = c.Query("account")
-	inputUser.Username = c.Query("username")
-	inputUser.Password = c.Query("password")
+	if err := c.ShouldBindJSON(&inputUser); err != nil {
+		klog.Error(err)
+		handler.WriteFailed(c, "data acquisition failed ")
+		return
+	}
 
 	msg := "select count(*) from user where account = ? ;"
 	db, errmsg := app.NewMySql(msg)

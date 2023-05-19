@@ -2,7 +2,6 @@ package app
 
 import (
 	"database/sql"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -15,7 +14,7 @@ type MySql struct {
 	stmt  *sql.Stmt
 }
 
-//新建连接，从连接池拿一个
+// NewMySql 新建连接，从连接池拿一个
 func NewMySql(msg string) (*MySql, string) {
 	mysqlTemp, err := sql.Open("mysql", "root:@Wx614481987@tcp(1.15.76.132:3306)/androidDatabase")
 	if err != nil {
@@ -38,7 +37,7 @@ func NewMySql(msg string) (*MySql, string) {
 	}, ""
 }
 
-//用sql语句查询，返回一个结果字符串列表
+// Search 用sql语句查询，返回一个结果字符串列表
 func (sql *MySql) Search(args ...interface{}) ([]string, string) {
 	var result []string
 	var temp string
@@ -48,11 +47,12 @@ func (sql *MySql) Search(args ...interface{}) ([]string, string) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		rows.Scan(&temp)
-		fmt.Println(temp)
+		err := rows.Scan(&temp)
+		if err != nil {
+			return nil, ""
+		}
 		result = append(result, temp)
 	}
-	fmt.Println("search")
 	return result, ""
 }
 
@@ -105,7 +105,7 @@ func (sql *MySql) SearchRows(obj interface{}, args ...interface{}) ([]interface{
 	return results, ""
 }
 
-//执行UPDATE、INSERT、DELETE操作
+// Exec 执行UPDATE、INSERT、DELETE操作
 func (sql *MySql) Exec(args ...interface{}) string {
 	_, err := sql.stmt.Exec(args...)
 	if err != nil {
@@ -115,7 +115,7 @@ func (sql *MySql) Exec(args ...interface{}) string {
 	return ""
 }
 
-//关闭数据库连接
+// Close 关闭数据库连接
 func (sql *MySql) Close() {
 	err := sql.mysql.Close()
 	if err != nil {
