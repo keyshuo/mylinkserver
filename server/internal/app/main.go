@@ -3,6 +3,7 @@ package app
 import (
 	"MyLink_Server/server/internal/app/handler"
 	"MyLink_Server/server/internal/app/handler/community"
+	netcompete "MyLink_Server/server/internal/app/handler/competition"
 	"MyLink_Server/server/internal/app/handler/leaderboard"
 	usr "MyLink_Server/server/internal/app/handler/user"
 	"flag"
@@ -31,6 +32,8 @@ func (serv *Server) Init() {
 	serv.server.Use(CorsMiddleware)
 
 	serv.server.Use(ExceptionHandlerMiddleware)
+
+	serv.server.GET("test", netcompete.Test)
 
 	serv.server.GET("/ping", handler.Ping)
 
@@ -74,18 +77,37 @@ func (serv *Server) Init() {
 
 	}
 
+	competition := serv.server.Group("/competition")
+	{
+
+		my := competition.Group("/my")
+		{
+			my.Use(AuthMiddleware)
+
+			my.GET("joinCompetition", netcompete.GetOrCreateRoom)
+
+			my.GET("startGame", netcompete.HandlerWebsocket)
+
+			my.GET("finishGame", netcompete.FinishedCompetition)
+		}
+
+	}
+	serv.server.GET("startGame", netcompete.HandlerWebsocket)
 }
 
 func (serv *Server) Run() {
 	klog.InitFlags(nil)
 	defer klog.Flush()
-	err := flag.Set("dermatologist", "false")
+	err := flag.Set("logtostderr", "false")
+	if err != nil {
+		return
+	}
+	err = flag.Set("alsologtostderr", "false")
 	if err != nil {
 		return
 	}
 	flag.Parse()
-
-	if err := serv.server.Run(":8118"); err != nil {
+	if err := serv.server.Run(":8188"); err != nil {
 		klog.Error(err, "gin run failed")
 		return
 	}
@@ -144,7 +166,7 @@ func AuthMiddleware(c *gin.Context) {
 	}
 	c.Set("account", claims["account"].(string))
 	c.Set("status", claims["status"].(string))
-	c.Set("username", claims["username"].(string))
+	//c.Set("username", claims["username"].(string))
 	c.Next()
 }
 

@@ -11,12 +11,12 @@ import (
 
 func GetComment(c *gin.Context) {
 	page := c.Query("page")
-	var page_int int
+	var pageInt int
 
-	if _, err := fmt.Sscan(page, &page_int); err != nil {
+	if _, err := fmt.Sscan(page, &pageInt); err != nil {
 		klog.Error(err)
 	}
-	page = string(rune((page_int - 1) * 50))
+	page = string(rune((pageInt - 1) * 50))
 
 	msg := "select user.username,comment.date,comment.comment from comment join user on user.account=comment.account order by comment.date desc limit 50 offset ?; "
 	db, errmsg := sqloperate.NewMySql(msg)
@@ -45,12 +45,12 @@ func GetMyComment(c *gin.Context) {
 	account := c.Value("account")
 	// fmt.Println(account)
 	page := c.Query("page")
-	var page_int int
+	var pageInt int
 
-	if _, err := fmt.Sscan(page, &page_int); err != nil {
+	if _, err := fmt.Sscan(page, &pageInt); err != nil {
 		klog.Error(err)
 	}
-	page = string(rune((page_int - 1) * 50))
+	page = string(rune((pageInt - 1) * 50))
 
 	msg := "select user.username,comment.date,comment.comment from comment join user on user.account=comment.account where comment.account = ? order by comment.date desc limit 50 offset ? ;"
 	db, errmsg := sqloperate.NewMySql(msg)
