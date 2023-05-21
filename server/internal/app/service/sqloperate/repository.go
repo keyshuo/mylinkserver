@@ -15,51 +15,48 @@ type MySql struct {
 }
 
 // NewMySql 新建连接，从连接池拿一个
-func NewMySql(msg string) (*MySql, string) {
+func NewMySql(msg string) (*MySql, error) {
 	mysqlTemp, err := sql.Open("mysql", "root:@Wx614481987@tcp(1.15.76.132:3306)/androidDatabase")
 	if err != nil {
-		klog.Error(err)
-		return nil, "database connection failed"
+		return nil, err
 	}
 	err = mysqlTemp.Ping()
 	if err != nil {
-		klog.Error(err)
-		return nil, "database connection failed"
+		return nil, err
 	}
 	stmtTemp, err := mysqlTemp.Prepare(msg)
 	if err != nil {
-		klog.Error(err)
-		return nil, "message exist problem"
+		return nil, err
 	}
 	return &MySql{
 		mysql: mysqlTemp,
 		stmt:  stmtTemp,
-	}, ""
+	}, nil
 }
 
 // Search 用sql语句查询，返回一个结果字符串列表
-func (sql *MySql) Search(args ...interface{}) ([]string, string) {
+func (sql *MySql) Search(args ...interface{}) ([]string, error) {
 	var result []string
 	var temp string
 	rows, err := sql.stmt.Query(args...)
 	if err != nil {
-		return nil, "server search error"
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		err := rows.Scan(&temp)
 		if err != nil {
-			return nil, ""
+			return nil, err
 		}
 		result = append(result, temp)
 	}
-	return result, ""
+	return result, nil
 }
 
-func (sql *MySql) SearchRows(obj interface{}, args ...interface{}) ([]interface{}, string) {
+func (sql *MySql) SearchRows(obj interface{}, args ...interface{}) ([]interface{}, error) {
 	rows, err := sql.stmt.Query(args...)
 	if err != nil {
-		return nil, "server search error"
+		return nil, err
 	}
 	defer rows.Close()
 	s := reflect.ValueOf(obj).Elem()
@@ -81,9 +78,9 @@ func (sql *MySql) SearchRows(obj interface{}, args ...interface{}) ([]interface{
 			field := t.Field(i)
 			values[i] = r.FieldByName(field.Name).Addr().Interface()
 		}
-		if err := rows.Scan(values...); err != nil {
-			klog.Error(err)
-			return nil, "server error"
+		err := rows.Scan(values...)
+		if err != nil {
+			return nil, err
 		}
 		for i := 0; i < s.NumField(); i++ {
 			field := t.Field(i)
@@ -92,8 +89,7 @@ func (sql *MySql) SearchRows(obj interface{}, args ...interface{}) ([]interface{
 					value := values[i].(*string)
 					date, err := time.ParseInLocation("2006-01-02 15:04:05", *value, time.Local)
 					if err != nil {
-						klog.Error(err)
-						return nil, "server error"
+						return nil, err
 					}
 					r.FieldByName(field.Name).Set(reflect.ValueOf(date.Format("2006-01-02 15:04:05")))
 				}
@@ -102,17 +98,16 @@ func (sql *MySql) SearchRows(obj interface{}, args ...interface{}) ([]interface{
 		results = append(results, r.Addr().Interface())
 	}
 
-	return results, ""
+	return results, nil
 }
 
 // Exec 执行UPDATE、INSERT、DELETE操作
-func (sql *MySql) Exec(args ...interface{}) string {
+func (sql *MySql) Exec(args ...interface{}) error {
 	_, err := sql.stmt.Exec(args...)
 	if err != nil {
-		klog.Error(err)
-		return "operation error"
+		return err
 	}
-	return ""
+	return err
 }
 
 // Close 关闭数据库连接
@@ -129,23 +124,20 @@ func (sql *MySql) Close() {
 	}
 }
 
-func (newSql *MySql) UpdateMysql(msg string) string {
+func (newSql *MySql) UpdateMysql(msg string) error {
 	mysqlTemp, err := sql.Open("mysql", "root:@Wx614481987@tcp(1.15.76.132:3306)/androidDatabase")
 	if err != nil {
-		klog.Error(err)
-		return "database connection failed"
+		return err
 	}
 	err = mysqlTemp.Ping()
 	if err != nil {
-		klog.Error(err)
-		return "database connection failed"
+		return err
 	}
 	stmtTemp, err := mysqlTemp.Prepare(msg)
 	if err != nil {
-		klog.Error(err)
-		return "message exist problem"
+		return err
 	}
 	newSql.mysql = mysqlTemp
 	newSql.stmt = stmtTemp
-	return ""
+	return nil
 }

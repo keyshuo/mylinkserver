@@ -1,69 +1,37 @@
 package leaderboard
 
 import (
-	"MyLink_Server/server/internal/app/handler"
-	sqloperate "MyLink_Server/server/internal/app/handler/sqloperate"
-
+	"MyLink_Server/server/internal/app/handler/httpRespone"
+	"MyLink_Server/server/internal/app/service/leaderboard"
 	"github.com/gin-gonic/gin"
 )
 
-//low difficulty
+// GetRankLow low difficulty
 func GetRankLow(c *gin.Context) {
-
-	msg := "select user.username,ranklow.date,ranklow.score from ranklow join user on user.account=ranklow.account order by score desc limit 50;"
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	result, msg := leaderboard.GetRankLow()
+	if msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-
-	defer db.Close()
-
-	result, errmsg := db.SearchRows(&UserRank{})
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-
-	handler.WriteOK(c, result)
+	httpRespone.WriteOK(c, result)
 }
 
-//medium difficulty
+// GetRankMedium medium difficulty
 func GetRankMedium(c *gin.Context) {
-	msg := "select user.username,rankmedium.date,rankmedium.score from rankmedium join user on user.account=rankmedium.account order by score desc limit 50;"
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	result, msg := leaderboard.GetRankMedium()
+	if msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-
-	defer db.Close()
-
-	result, errmsg := db.SearchRows(&UserRank{})
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-
-	handler.WriteOK(c, result)
+	httpRespone.WriteOK(c, result)
 }
 
-//high difficulty
+// GetRankHigh high difficulty
 func GetRankHigh(c *gin.Context) {
-	msg := "select user.username,rankhigh.date,rankhigh.score from rankhigh join user on user.account=rankhigh.account order by score desc limit 50;"
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	result, msg := leaderboard.GetRankHigh()
+	if msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-
-	defer db.Close()
-
-	result, errmsg := db.SearchRows(&UserRank{})
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-
-	handler.WriteOK(c, result)
+	httpRespone.WriteOK(c, result)
 }

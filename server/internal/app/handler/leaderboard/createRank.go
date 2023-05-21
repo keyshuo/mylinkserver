@@ -1,33 +1,24 @@
 package leaderboard
 
 import (
-	"MyLink_Server/server/internal/app/handler"
-	sqloperate "MyLink_Server/server/internal/app/handler/sqloperate"
-
+	"MyLink_Server/server/internal/app/handler/httpRespone"
+	"MyLink_Server/server/internal/app/service/leaderboard"
 	"github.com/gin-gonic/gin"
 )
 
 func CreateRank(c *gin.Context) {
 	status := c.Value("status")
 	if status == "false" {
-		handler.WriteFailed(c, "please login")
+		httpRespone.WriteFailed(c, "please login")
 		return
 	}
 
-	account := c.Value("account")
+	account := c.Value("account").(string)
 	time := c.Query("time")
 	date := c.Query("date")
-	msg := "insert into ranktable value ( ?, ?, ?);"
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	if msg := leaderboard.CreateRank(account, time, date); msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-	defer db.Close()
-	errmsg = db.Exec(account, time, date)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-	handler.WriteOK(c, "")
+	httpRespone.WriteOK(c, nil)
 }

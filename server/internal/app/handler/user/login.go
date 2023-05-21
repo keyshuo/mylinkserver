@@ -1,41 +1,24 @@
 package user
 
 import (
-	"MyLink_Server/server/internal/app/handler"
-	sqloperate "MyLink_Server/server/internal/app/handler/sqloperate"
+	"MyLink_Server/server/internal/app/handler/httpRespone"
+	"MyLink_Server/server/internal/app/service/log"
+	"MyLink_Server/server/internal/app/service/user"
 	"github.com/gin-gonic/gin"
-	"k8s.io/klog"
 )
 
-// POST use body
+// Login POST use body
 func Login(c *gin.Context) {
-	var inputUser User
-	if err := c.ShouldBindJSON(&inputUser); err != nil {
-		klog.Error(err)
-		handler.WriteFailed(c, "data acquisition failed ")
+	var inputUser user.User
+	err := c.ShouldBindJSON(&inputUser)
+	if log.ErrorLog(err) != nil {
+		httpRespone.WriteFailed(c, "data acquisition failed ")
 		return
 	}
-	msg := "select count(*) from user where account= ? and password=?;"
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	token, msg := user.Login(inputUser)
+	if msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-	defer db.Close()
-	result, errmsg := db.Search(inputUser.Account, inputUser.Password)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-	if result[0] == "1" {
-		tokenString, err := GenerateToken(inputUser)
-		if err != nil {
-			klog.Error("Error: ", err)
-			handler.WriteFailed(c, "token generate failed")
-			return
-		}
-		handler.WriteOK(c, tokenString)
-	} else {
-		handler.WriteFailed(c, "user not existed")
-	}
+	httpRespone.WriteOK(c, token)
 }

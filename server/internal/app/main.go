@@ -1,10 +1,11 @@
 package app
 
 import (
-	"MyLink_Server/server/internal/app/handler"
 	"MyLink_Server/server/internal/app/handler/community"
 	netcompete "MyLink_Server/server/internal/app/handler/competition"
+	"MyLink_Server/server/internal/app/handler/httpRespone"
 	"MyLink_Server/server/internal/app/handler/leaderboard"
+	music2 "MyLink_Server/server/internal/app/handler/music"
 	usr "MyLink_Server/server/internal/app/handler/user"
 	"flag"
 	"fmt"
@@ -35,11 +36,18 @@ func (serv *Server) Init() {
 
 	serv.server.GET("test", netcompete.Test)
 
-	serv.server.GET("/ping", handler.Ping)
+	serv.server.GET("/ping", httpRespone.Ping)
 
 	serv.server.POST("/login", usr.Login)
 
 	serv.server.POST("/register", usr.Register)
+
+	music := serv.server.Group("/music")
+	{
+		music.GET("getList", music2.GetMusicList)
+
+		music.GET("getMusic", music2.GetMusic)
+	}
 
 	comment := serv.server.Group("/comment")
 	{

@@ -1,4 +1,4 @@
-package handler
+package httpRespone
 
 import (
 	"net/http"
@@ -24,4 +24,12 @@ func WriteFailed(c *gin.Context, err interface{}) {
 		"code":  401,
 		"error": err,
 	})
+}
+
+func WriteMusic(c *gin.Context, music interface{}) {
+	if music != nil {
+		c.Data(http.StatusOK, "audio/mpeg", music.([]byte))
+	} else {
+		c.JSON(http.StatusOK, gin.H{})
+	}
 }

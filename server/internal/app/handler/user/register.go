@@ -1,72 +1,22 @@
 package user
 
 import (
-	"MyLink_Server/server/internal/app/handler"
-	app "MyLink_Server/server/internal/app/handler/sqloperate"
-	"k8s.io/klog"
-
+	"MyLink_Server/server/internal/app/handler/httpRespone"
+	"MyLink_Server/server/internal/app/service/log"
+	"MyLink_Server/server/internal/app/service/user"
 	"github.com/gin-gonic/gin"
 )
 
 func Register(c *gin.Context) {
-	var inputUser User
-	if err := c.ShouldBindJSON(&inputUser); err != nil {
-		klog.Error(err)
-		handler.WriteFailed(c, "data acquisition failed ")
+	var inputUser user.User
+	err := c.ShouldBindJSON(&inputUser)
+	if log.ErrorLog(err) != nil {
+		httpRespone.WriteFailed(c, "data acquisition failed ")
 		return
 	}
-
-	msg := "select count(*) from user where account = ? ;"
-	db, errmsg := app.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	if msg := user.Register(inputUser); msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-	defer db.Close()
-
-	//这里可能存在BUG，count语句使用string数组保存
-	result, err := db.Search(inputUser.Account)
-
-	if err == "" {
-		if result[0] >= "1" {
-			handler.WriteFailed(c, "account have existed")
-			return
-		}
-	} else {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-
-	msg = "select count(*) from user where username = ? ;"
-	errmsg = db.UpdateMysql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-
-	result1, err := db.Search(inputUser.Username)
-
-	if err == "" {
-		if result1[0] >= "1" {
-			handler.WriteFailed(c, "username have existed")
-			return
-		} else {
-			msg = "insert into user value ( ?, ?, ?);"
-			errmsg = db.UpdateMysql(msg)
-			if err != "" {
-				handler.WriteFailed(c, errmsg)
-				return
-			}
-			errmsg = db.Exec(inputUser.Account, inputUser.Username, inputUser.Password)
-			if err != "" {
-				handler.WriteFailed(c, errmsg)
-				return
-			}
-			handler.WriteOK(c, "")
-			return
-		}
-	} else {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
+	httpRespone.WriteOK(c, nil)
 }

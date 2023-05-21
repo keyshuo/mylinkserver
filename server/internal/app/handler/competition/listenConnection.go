@@ -1,7 +1,7 @@
 package netcompete
 
 import (
-	"MyLink_Server/server/internal/app/handler"
+	"MyLink_Server/server/internal/app/handler/httpRespone"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -17,7 +17,7 @@ func Test(c *gin.Context) {
 	if Rooms[1] != nil {
 		fmt.Println(Rooms[1])
 	}
-	handler.WriteOK(c, gin.H{
+	httpRespone.WriteOK(c, gin.H{
 		"msg": Rooms[1].Competition.Player1.username,
 	})
 }

@@ -1,7 +1,7 @@
 package netcompete
 
 import (
-	"MyLink_Server/server/internal/app/handler"
+	"MyLink_Server/server/internal/app/handler/httpRespone"
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 	"strconv"
@@ -16,7 +16,7 @@ func GetOrCreateRoom(c *gin.Context) {
 
 	if username == "" {
 		klog.Error("username is nil")
-		handler.WriteFailed(c, "username is nil")
+		httpRespone.WriteFailed(c, "username is nil")
 		return
 	}
 	checkerboard, _ := strconv.Atoi(c.Query("checkerboard"))
@@ -33,7 +33,7 @@ func GetOrCreateRoom(c *gin.Context) {
 				start:      false,
 				end:        false,
 			}
-			handler.WriteOK(c, room.Competition.Sign)
+			httpRespone.WriteOK(c, room.Competition.Sign)
 			return
 		}
 	}
@@ -65,7 +65,7 @@ func GetOrCreateRoom(c *gin.Context) {
 		//Clients:     make(map[*websocket.Conn]bool),
 	}
 	Rooms[competition.Sign] = room
-	handler.WriteOK(c, competition.Sign)
+	httpRespone.WriteOK(c, competition.Sign)
 }
 func getMyConnectionStatus(username string, competition Competition) bool {
 	if username == competition.Player1.username {

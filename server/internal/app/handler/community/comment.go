@@ -1,116 +1,68 @@
 package community
 
 import (
-	"MyLink_Server/server/internal/app/handler"
-	sqloperate "MyLink_Server/server/internal/app/handler/sqloperate"
-	"fmt"
-
+	"MyLink_Server/server/internal/app/handler/httpRespone"
+	"MyLink_Server/server/internal/app/service/community"
 	"github.com/gin-gonic/gin"
-	"k8s.io/klog"
 )
 
 func GetComment(c *gin.Context) {
 	page := c.Query("page")
 	var pageInt int
 
-	if _, err := fmt.Sscan(page, &pageInt); err != nil {
-		klog.Error(err)
-	}
-	page = string(rune((pageInt - 1) * 50))
-
-	msg := "select user.username,comment.date,comment.comment from comment join user on user.account=comment.account order by comment.date desc limit 50 offset ?; "
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	result, msg := community.GetComment(page, pageInt)
+	if msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-
-	defer db.Close()
-
-	result, errmsg := db.SearchRows(&UserComment{}, page)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-
-	handler.WriteOK(c, result)
+	httpRespone.WriteOK(c, result)
 }
 
 func GetMyComment(c *gin.Context) {
 	status := c.Value("status")
 	if status == "false" {
-		handler.WriteFailed(c, "please login")
+		httpRespone.WriteFailed(c, "please login")
 		return
 	}
-	account := c.Value("account")
+	account := c.Value("account").(string)
 	// fmt.Println(account)
 	page := c.Query("page")
 	var pageInt int
-
-	if _, err := fmt.Sscan(page, &pageInt); err != nil {
-		klog.Error(err)
-	}
-	page = string(rune((pageInt - 1) * 50))
-
-	msg := "select user.username,comment.date,comment.comment from comment join user on user.account=comment.account where comment.account = ? order by comment.date desc limit 50 offset ? ;"
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	result, msg := community.GetMyComment(account, page, pageInt)
+	if msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-	defer db.Close()
-
-	result, errmsg := db.SearchRows(&UserComment{}, account, page)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-	handler.WriteOK(c, result)
+	httpRespone.WriteOK(c, result)
 }
 
 func CreateComment(c *gin.Context) {
 	status := c.Value("status")
 	if status == "false" {
-		handler.WriteFailed(c, "please login")
+		httpRespone.WriteFailed(c, "please login")
 		return
 	}
 	comment := c.Query("comment")
 	time := c.Query("time")
-	account := c.Value("account")
-	msg := "insert into comment value (?,?,?);"
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	account := c.Value("account").(string)
+	if msg := community.CreateComment(comment, time, account); msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-	defer db.Close()
-	errmsg = db.Exec(account, time, comment)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-	handler.WriteOK(c, "")
+	httpRespone.WriteOK(c, nil)
 }
 
 func DeleteComment(c *gin.Context) {
 	status := c.Value("status")
 	if status == "false" {
-		handler.WriteFailed(c, "please login")
+		httpRespone.WriteFailed(c, "please login")
 		return
 	}
 	time := c.Query("time")
-	account := c.Value("account")
-	msg := "delete from comment where account = ? and date = ?;"
-	db, errmsg := sqloperate.NewMySql(msg)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
+	account := c.Value("account").(string)
+	if msg := community.DeleteComment(account, time); msg != "" {
+		httpRespone.WriteFailed(c, msg)
 		return
 	}
-	defer db.Close()
-	errmsg = db.Exec(account, time)
-	if errmsg != "" {
-		handler.WriteFailed(c, errmsg)
-		return
-	}
-	handler.WriteOK(c, "")
+	httpRespone.WriteOK(c, nil)
 }

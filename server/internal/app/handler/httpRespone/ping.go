@@ -1,10 +1,10 @@
-package handler
+package httpRespone
 
 import (
 	"github.com/gin-gonic/gin"
 )
 
-//test connection
+// Ping test connection
 func Ping(c *gin.Context) {
 	WriteOK(c, "success")
 }
