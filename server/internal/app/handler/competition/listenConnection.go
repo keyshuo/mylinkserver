@@ -25,7 +25,7 @@ func Test(c *gin.Context) {
 // HandlerWebsocket
 // 后面可以把player改为数组形式
 // 点击”准备“后会进入当前状态,不需要发送信息，携带token，对token进行鉴权解析即可
-// 如果对方掉线不连呢？
+// 如果对方掉线不连呢？新开线程对掉线状态检测
 func HandlerWebsocket(c *gin.Context) {
 	//flag代表对方是否准备
 	flag := false
@@ -60,15 +60,23 @@ func HandlerWebsocket(c *gin.Context) {
 	//websocket通信
 	for {
 		//每隔5s发送一次
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 		//若对方掉线
 		if getOtherPlayerConnectionStatus(username, Rooms[roomNumber].Competition) {
 			//新开线程检测是否超过20s，若超过，则返回true
 			go func() {
-				time.Sleep(20 * time.Second)
+				counter := 0
+				time.Sleep(1 * time.Second)
+				counter += 1
+				//若对手状态未连接上，且计数大于20，判输
 				if !getOtherPlayerConnectionStatus(username, Rooms[roomNumber].Competition) {
+					if counter > 20 {
+						setPlayerEnd(username, Rooms[roomNumber].Competition, getOtherPlayerConnectionStatus(username, Rooms[roomNumber].Competition))
+						disconnected <- true
+					}
+				} else {
 					setPlayerEnd(username, Rooms[roomNumber].Competition, getOtherPlayerConnectionStatus(username, Rooms[roomNumber].Competition))
-					disconnected <- true
+					disconnected <- false
 				}
 			}()
 		}
