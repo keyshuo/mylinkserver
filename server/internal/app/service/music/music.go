@@ -3,12 +3,13 @@ package music
 import (
 	"MyLink_Server/server/internal/app/service/log"
 	sql "MyLink_Server/server/internal/app/service/sqloperate"
+	"fmt"
 	"io/ioutil"
 	"os"
 )
 
 func GetMusicList() ([]string, string) {
-	msg := "select * from music"
+	msg := "select name from music"
 	db, err := sql.NewMySql(msg)
 	defer db.Close()
 	if log.ErrorLog(err) != nil {
@@ -23,6 +24,7 @@ func GetMusicList() ([]string, string) {
 
 func GetMusic(name string) ([]byte, string) {
 	msg := "select path from music where name = ? ;"
+	fmt.Println(name)
 	db, err := sql.NewMySql(msg)
 	defer db.Close()
 	if log.ErrorLog(err) != nil {

@@ -10,6 +10,7 @@ func GetMusicList(c *gin.Context) {
 	result, msg := music.GetMusicList()
 	if msg != "" {
 		httpRespone.WriteFailed(c, msg)
+		return
 	}
 	httpRespone.WriteOK(c, result)
 }
@@ -19,6 +20,7 @@ func GetMusic(c *gin.Context) {
 	musicData, msg := music.GetMusic(name)
 	if msg != "" {
 		httpRespone.WriteFailed(c, msg)
+		return
 	}
 	httpRespone.WriteMusic(c, musicData)
 }
